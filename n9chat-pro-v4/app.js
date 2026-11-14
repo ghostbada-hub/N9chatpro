@@ -27,8 +27,8 @@ async function groqFetch(url, options={}) {
   return response;
 }
 const VISION_MODEL  = "meta-llama/llama-4-scout-17b-16e-instruct";
-const TEXT_MODEL    = "llama-3.3-70b-versatile";
-const WHISPER_MODEL = "whisper-large-v3";
+const TEXT_MODEL    = "qwen/qwen3.8-27b";
+const WHISPER_MODEL = "whisper-large-v3-turbo";
 
 const LANGUAGES = [
   { code: 'fr', label: '🇫🇷 Français' },
