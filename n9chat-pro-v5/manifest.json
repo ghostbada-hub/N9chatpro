@@ -1,0 +1,14 @@
+{
+  "id": "./",
+  "name": "N9chat Pro",
+  "short_name": "N9chat",
+  "start_url": "./",
+  "scope": "./",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#10131b",
+  "theme_color": "#10131b",
+  "description": "Assistant IA rapide et léger.",
+  "lang": "fr",
+  "icons": [{ "src": "./icon.svg", "sizes": "any", "type": "image/svg+xml", "purpose": "any maskable" }]
+}
