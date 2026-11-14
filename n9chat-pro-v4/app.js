@@ -557,7 +557,7 @@ const App = () => {
   const transcribeAudio=async att=>{
     const fd=new FormData();
     fd.append('file',att.file,att.name);fd.append('model',WHISPER_MODEL);fd.append('response_format','text');fd.append('language',profile.language||'fr');
-    const res=await groqFetch("https://api.groq.com/openai/v1/audio/transcriptions",{method:"POST",,body:fd});
+    const res=await groqFetch("https://api.groq.com/openai/v1/audio/transcriptions",{method:"POST",body:fd});
     return(await res.text()).trim();
   };
 
