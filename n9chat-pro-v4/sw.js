@@ -1,5 +1,5 @@
-// ── N9chat Pro — Service Worker v4 (offline-ready) ──────────────
-const CACHE_NAME = 'n9chat-pro-v4';
+// ── N9chat Pro — Service Worker v5 (offline-ready) ──────────────
+const CACHE_NAME = 'n9chat-pro-v5';
 
 // Tous les assets locaux à pré-cacher à l'installation
 const PRECACHE_ASSETS = [
