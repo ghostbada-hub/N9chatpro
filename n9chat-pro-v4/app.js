@@ -9,7 +9,23 @@ if ('serviceWorker' in navigator) {
 
 const { useState, useEffect, useRef, useCallback, createElement: h } = React;
 
-const GROQ_API_KEY  = "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";
+const GROQ_API_KEY_SESSION_KEY = 'n9_groq_api_key';
+function getGroqApiKey() {
+  try { return sessionStorage.getItem(GROQ_API_KEY_SESSION_KEY) || ''; } catch { return ''; }
+}
+async function groqFetch(url, options={}) {
+  const apiKey = getGroqApiKey();
+  if (!apiKey) throw new Error('Clé Groq manquante. Ouvrez Profil > Connexion IA et enregistrez votre clé.');
+  const headers = new Headers(options.headers || {});
+  headers.set('Authorization', `Bearer ${apiKey}`);
+  const response = await fetch(url, {...options, headers});
+  if (!response.ok) {
+    let message = '';
+    try { const body = await response.clone().json(); message = body.error?.message || body.message || ''; } catch {}
+    throw new Error(message || `Erreur Groq (${response.status}). Vérifiez la clé et les limites de votre compte.`);
+  }
+  return response;
+}
 const VISION_MODEL  = "meta-llama/llama-4-scout-17b-16e-instruct";
 const TEXT_MODEL    = "llama-3.3-70b-versatile";
 const WHISPER_MODEL = "whisper-large-v3";
@@ -253,7 +269,7 @@ const MessageBubble = ({msg})=>{
         h("span",{className:"msg-sender"},msg.sender),
         h("div",{className:`msg-bubble ${isSent?'sent':'received'}`},
           h(MsgAttachments,{atts:msg.attachments}),
-          msg.text&&(isSent?h("span",null,msg.text):h("div",{ref,className:"prose-content",dangerouslySetInnerHTML:{__html:marked.parse(msg.text)}}))
+          msg.text&&(isSent?h("span",null,msg.text):h("div",{ref,className:"prose-content",dangerouslySetInnerHTML:{__html:DOMPurify.sanitize(marked.parse(msg.text))}}))
         )
       )
     )
@@ -319,11 +335,21 @@ const LoginScreen = ({onLogin})=>{
 // ─────────────────────────────────────────────────────────────────
 const ProfileScreen = ({profile,onSave,onBack})=>{
   const [form,setForm]=useState({...profile});
+  const [groqKey,setGroqKey]=useState(()=>getGroqApiKey());
+  const [keySaved,setKeySaved]=useState(false);
   const [saved,setSaved]=useState(false);
   const avatarRef=useRef(null);
   const set=(k,v)=>setForm(p=>({...p,[k]:v}));
   const pickAvatar=async e=>{const f=e.target.files[0];if(!f)return;set('avatar',await fileToBase64(f));e.target.value='';};
   const handleSave=()=>{onSave(form);setSaved(true);setTimeout(()=>setSaved(false),2000);};
+  const saveGroqKey=()=>{
+    try {
+      const value=groqKey.trim();
+      if(value)sessionStorage.setItem(GROQ_API_KEY_SESSION_KEY,value);
+      else sessionStorage.removeItem(GROQ_API_KEY_SESSION_KEY);
+      setGroqKey(value);setKeySaved(true);setTimeout(()=>setKeySaved(false),2000);
+    } catch { alert("Impossible d'enregistrer la clé dans cette session."); }
+  };
   const deleteWhisper=()=>{const ks=Object.keys(localStorage).filter(k=>k.startsWith('n9_whisper_'));ks.forEach(k=>localStorage.removeItem(k));alert(`${ks.length} transcription(s) Whisper supprimée(s).`);};
   const requestNotif=async()=>{const ok=await requestPushPermission();alert(ok?'✅ Notifications activées !':'❌ Permission refusée.');};
   const initials=(form.pseudo||form.name||'?')[0].toUpperCase();
@@ -356,6 +382,17 @@ const ProfileScreen = ({profile,onSave,onBack})=>{
         h("div",{className:"profile-field"},h("label",{className:"profile-label"},"Nom complet"),h("input",{className:"profile-input",type:"text",placeholder:"Ex: Jean Dupont",value:form.name,onChange:e=>set('name',e.target.value),maxLength:60})),
         h("div",{className:"profile-field"},h("label",{className:"profile-label"},"Pseudo / Alias"),h("input",{className:"profile-input",type:"text",placeholder:"Ex: JD_Pro",value:form.pseudo,onChange:e=>set('pseudo',e.target.value),maxLength:30}),h("span",{className:"profile-hint"},"Affiché dans les messages")),
         h("div",{className:"profile-field"},h("label",{className:"profile-label"},"Bio / Description"),h("textarea",{className:"profile-textarea",placeholder:"Quelques mots sur vous…",value:form.bio,onChange:e=>set('bio',e.target.value),rows:3,maxLength:200}),h("span",{className:"profile-hint"},`${form.bio.length}/200`))
+      ),
+
+      // Groq API key
+      h("section",{className:"profile-section"},
+        h("h3",{className:"profile-section-title"},"Connexion IA (Groq)"),
+        h("p",{className:"profile-hint"},"Collez votre clé Groq. Elle reste dans cette session du navigateur et est envoyée directement à Groq."),
+        h("div",{className:"profile-field"},
+          h("label",{className:"profile-label",htmlFor:"groq-api-key"},"Clé API"),
+          h("input",{id:"groq-api-key",className:"profile-input",type:"password",autoComplete:"off",spellCheck:false,placeholder:"gsk_…",value:groqKey,onChange:e=>setGroqKey(e.target.value)})
+        ),
+        h("button",{className:"profile-notif-btn",onClick:saveGroqKey},keySaved?"Clé enregistrée":"Enregistrer la clé")
       ),
 
       // AI Persona
@@ -520,7 +557,7 @@ const App = () => {
   const transcribeAudio=async att=>{
     const fd=new FormData();
     fd.append('file',att.file,att.name);fd.append('model',WHISPER_MODEL);fd.append('response_format','text');fd.append('language',profile.language||'fr');
-    const res=await fetch("https://api.groq.com/openai/v1/audio/transcriptions",{method:"POST",headers:{"Authorization":`Bearer ${GROQ_API_KEY}`},body:fd});
+    const res=await groqFetch("https://api.groq.com/openai/v1/audio/transcriptions",{method:"POST",,body:fd});
     return(await res.text()).trim();
   };
 
@@ -535,7 +572,7 @@ const App = () => {
     const thread=threads.find(t=>t.id===tid);
     if(!thread||thread.summarized||msgs.length<8)return;
     try{
-      const res=await fetch("https://api.groq.com/openai/v1/chat/completions",{method:"POST",headers:{"Authorization":`Bearer ${GROQ_API_KEY}`,"Content-Type":"application/json"},body:JSON.stringify({model:TEXT_MODEL,messages:[{role:"system",content:"Génère un résumé court (2-3 phrases max) de cette conversation."},{role:"user",content:msgs.map(m=>`${m.sender}: ${m.text||''}`).join('\n')}],max_tokens:150})});
+      const res=await groqFetch("https://api.groq.com/openai/v1/chat/completions",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({model:TEXT_MODEL,messages:[{role:"system",content:"Génère un résumé court (2-3 phrases max) de cette conversation."},{role:"user",content:msgs.map(m=>`${m.sender}: ${m.text||''}`).join('\n')}],max_tokens:150})});
       const data=await res.json();
       const summary=data.choices?.[0]?.message?.content;
       if(summary)setThreads(prev=>prev.map(t=>t.id===tid?{...t,summarized:true,summary}:t));
@@ -570,7 +607,7 @@ const App = () => {
         addMsg(tid,{id:Date.now()+1,sender:"N9chat",type:"received",text:"📵 **Mode hors ligne**\n\nL'application fonctionne sans connexion, mais les réponses IA nécessitent internet.\n\nVos conversations et messages sont conservés localement. Reconnectez-vous pour continuer à chatter."});
         return;
       }
-      const res=await fetch("https://api.groq.com/openai/v1/chat/completions",{method:"POST",headers:{"Authorization":`Bearer ${GROQ_API_KEY}`,"Content-Type":"application/json"},body:JSON.stringify({model:useVision?VISION_MODEL:TEXT_MODEL,messages:[{role:"system",content:buildSysPrompt(displayName)},...history,{role:"user",content:finalContent}],temperature:0.6,max_tokens:2048})});
+      const res=await groqFetch("https://api.groq.com/openai/v1/chat/completions",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({model:useVision?VISION_MODEL:TEXT_MODEL,messages:[{role:"system",content:buildSysPrompt(displayName)},...history,{role:"user",content:finalContent}],temperature:0.6,max_tokens:2048})});
       const data=await res.json();
       // Le SW renvoie un JSON d'erreur si hors ligne
       if(data.error){
@@ -617,7 +654,7 @@ const App = () => {
     else{applyTheme(existing.theme,existing.darkMode);}
     setIsLoggedIn(true);
   };
-  const handleLogout=()=>{localStorage.clear();location.reload();};
+  const handleLogout=()=>{localStorage.clear();sessionStorage.removeItem(GROQ_API_KEY_SESSION_KEY);location.reload();};
   const handleProfileSave=np=>{saveProfile(np);setProfile(np);applyTheme(np.theme,np.darkMode);};
 
   const canSend=!isTyping&&(inputValue.trim().length>0||attachments.length>0);
