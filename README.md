@@ -1,19 +1,17 @@
 # N9chat Pro
 
-Application de chat IA statique, installable comme PWA.
+Une application de chat IA légère, sans framework ni bibliothèque externe côté navigateur. L’interface charge un seul document, redimensionne les images avant l’envoi et affiche les réponses en continu.
 
-## Ouvrir l’application
+## Application
 
-Après le déploiement GitHub Pages : https://ghostbada-hub.github.io/N9chatpro/
+La version rapide est dans `n9chat-pro-v5/`. Le site GitHub Pages sera accessible à https://ghostbada-hub.github.io/N9chatpro/ lorsque Pages sera activé dans les réglages du dépôt.
 
 ## Configuration IA
 
-1. Ouvrez l’application puis **Profil → Connexion IA (Groq)**.
-2. Saisissez votre propre clé API Groq et enregistrez-la.
-3. La clé est conservée dans la session du navigateur et envoyée directement à l’API Groq. Elle n’est pas incluse dans le dépôt.
+Ouvrez **Paramètres** dans l’application, collez votre clé API Groq puis enregistrez-la. La clé reste dans la session du navigateur et est envoyée directement à Groq pour les requêtes. Le chat utilise `qwen/qwen3.8-27b`; l’analyse d’image utilise `meta-llama/llama-4-scout-17b-16e-instruct`.
 
-L’application utilise l’API Groq pour le chat, la vision et la transcription audio. Les réponses IA nécessitent une connexion Internet.
+Les conversations sont conservées dans le stockage local de cet appareil. Les réponses IA demandent une connexion Internet. Les images sont réduites côté navigateur avant leur envoi.
 
-## Sécurité
+## Sécurité importante
 
-Une clé Groq avait été intégrée dans une ancienne version publique du code. Révoquez-la et créez-en une nouvelle dans votre compte Groq, même si elle a été retirée des fichiers actuels : l’historique Git peut encore contenir l’ancienne valeur.
+Une ancienne clé Groq a été publiée dans une version précédente du code. Elle peut rester visible dans l’historique Git : révoquez-la dans Groq et remplacez-la par une nouvelle clé.
