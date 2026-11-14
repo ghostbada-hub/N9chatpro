@@ -9,7 +9,6 @@ if ('serviceWorker' in navigator) {
 
 const { useState, useEffect, useRef, useCallback, createElement: h } = React;
 
-const GROQ_API_KEY  = "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";
 const VISION_MODEL  = "meta-llama/llama-4-scout-17b-16e-instruct";
 const TEXT_MODEL    = "llama-3.3-70b-versatile";
 const WHISPER_MODEL = "whisper-large-v3";
@@ -317,7 +316,7 @@ const LoginScreen = ({onLogin})=>{
 // ─────────────────────────────────────────────────────────────────
 // PROFILE SCREEN
 // ─────────────────────────────────────────────────────────────────
-const ProfileScreen = ({profile,onSave,onBack})=>{
+const ProfileScreen = ({profile,onSave,onBack,groqApiKey,onGroqApiKeyChange})=>{
   const [form,setForm]=useState({...profile});
   const [saved,setSaved]=useState(false);
   const avatarRef=useRef(null);
@@ -373,6 +372,16 @@ const ProfileScreen = ({profile,onSave,onBack})=>{
         h("h3",{className:"profile-section-title"},"Langue préférée"),
         h("div",{className:"profile-lang-grid"},
           LANGUAGES.map(lang=>h("button",{key:lang.code,className:`profile-lang-btn ${form.language===lang.code?'active':''}`,onClick:()=>set('language',lang.code)},lang.label))
+        )
+      ),
+
+      h("section",{className:"profile-section"},
+        h("h3",{className:"profile-section-title"},"Intelligence artificielle"),
+        h("div",{className:"profile-field"},
+          h("label",{className:"profile-label",htmlFor:"groq-api-key"},"Clé API Groq"),
+          h("input",{id:"groq-api-key",className:"profile-input",type:"password",autoComplete:"off",spellCheck:false,placeholder:"gsk_…",value:groqApiKey,onChange:e=>onGroqApiKeyChange(e.target.value)}),
+          h("span",{className:"profile-hint"},"Votre clé reste en mémoire sur cet appareil jusqu’au rechargement. Elle n’est pas enregistrée dans votre profil. Utilisez uniquement une clé personnelle."),
+          h("a",{className:"profile-hint",href:"https://console.groq.com/keys",target:"_blank",rel:"noopener noreferrer"},"Gérer les clés Groq")
         )
       ),
 
@@ -435,6 +444,7 @@ const App = () => {
   const [isLoggedIn,setIsLoggedIn]     = useState(false);
   const [username,setUsername]         = useState("");
   const [profile,setProfile]           = useState(DEFAULT_PROFILE);
+  const [groqApiKey,setGroqApiKey]       = useState("");
   const [view,setView]                 = useState('chat');
   const [inputValue,setInputValue]     = useState("");
   const [isTyping,setIsTyping]         = useState(false);
@@ -518,9 +528,10 @@ const App = () => {
   };
 
   const transcribeAudio=async att=>{
+    if(!groqApiKey)throw new Error("Ajoutez votre clé Groq dans Mon Profil avant d’utiliser la transcription.");
     const fd=new FormData();
     fd.append('file',att.file,att.name);fd.append('model',WHISPER_MODEL);fd.append('response_format','text');fd.append('language',profile.language||'fr');
-    const res=await fetch("https://api.groq.com/openai/v1/audio/transcriptions",{method:"POST",headers:{"Authorization":`Bearer ${GROQ_API_KEY}`},body:fd});
+    const res=await fetch("https://api.groq.com/openai/v1/audio/transcriptions",{method:"POST",headers:{"Authorization":`Bearer ${groqApiKey}`},body:fd});
     return(await res.text()).trim();
   };
 
@@ -532,10 +543,11 @@ const App = () => {
   };
 
   const autoSummarize=async(tid,msgs)=>{
+    if(!groqApiKey)return;
     const thread=threads.find(t=>t.id===tid);
     if(!thread||thread.summarized||msgs.length<8)return;
     try{
-      const res=await fetch("https://api.groq.com/openai/v1/chat/completions",{method:"POST",headers:{"Authorization":`Bearer ${GROQ_API_KEY}`,"Content-Type":"application/json"},body:JSON.stringify({model:TEXT_MODEL,messages:[{role:"system",content:"Génère un résumé court (2-3 phrases max) de cette conversation."},{role:"user",content:msgs.map(m=>`${m.sender}: ${m.text||''}`).join('\n')}],max_tokens:150})});
+      const res=await fetch("https://api.groq.com/openai/v1/chat/completions",{method:"POST",headers:{"Authorization":`Bearer ${groqApiKey}`,"Content-Type":"application/json"},body:JSON.stringify({model:TEXT_MODEL,messages:[{role:"system",content:"Génère un résumé court (2-3 phrases max) de cette conversation."},{role:"user",content:msgs.map(m=>`${m.sender}: ${m.text||''}`).join('\n')}],max_tokens:150})});
       const data=await res.json();
       const summary=data.choices?.[0]?.message?.content;
       if(summary)setThreads(prev=>prev.map(t=>t.id===tid?{...t,summarized:true,summary}:t));
@@ -570,7 +582,8 @@ const App = () => {
         addMsg(tid,{id:Date.now()+1,sender:"N9chat",type:"received",text:"📵 **Mode hors ligne**\n\nL'application fonctionne sans connexion, mais les réponses IA nécessitent internet.\n\nVos conversations et messages sont conservés localement. Reconnectez-vous pour continuer à chatter."});
         return;
       }
-      const res=await fetch("https://api.groq.com/openai/v1/chat/completions",{method:"POST",headers:{"Authorization":`Bearer ${GROQ_API_KEY}`,"Content-Type":"application/json"},body:JSON.stringify({model:useVision?VISION_MODEL:TEXT_MODEL,messages:[{role:"system",content:buildSysPrompt(displayName)},...history,{role:"user",content:finalContent}],temperature:0.6,max_tokens:2048})});
+      if(!groqApiKey)throw new Error("Ajoutez votre clé Groq dans Mon Profil avant d’utiliser l’IA.");
+      const res=await fetch("https://api.groq.com/openai/v1/chat/completions",{method:"POST",headers:{"Authorization":`Bearer ${groqApiKey}`,"Content-Type":"application/json"},body:JSON.stringify({model:useVision?VISION_MODEL:TEXT_MODEL,messages:[{role:"system",content:buildSysPrompt(displayName)},...history,{role:"user",content:finalContent}],temperature:0.6,max_tokens:2048})});
       const data=await res.json();
       // Le SW renvoie un JSON d'erreur si hors ligne
       if(data.error){
@@ -626,7 +639,7 @@ const App = () => {
 
   if(showSplash)return h(SplashScreen,{onDone:()=>setShowSplash(false)});
   if(!isLoggedIn)return h(LoginScreen,{onLogin:handleLogin});
-  if(view==='profile')return h(ProfileScreen,{profile,onSave:handleProfileSave,onBack:()=>setView('chat')});
+  if(view==='profile')return h(ProfileScreen,{profile,onSave:handleProfileSave,onBack:()=>setView('chat'),groqApiKey,onGroqApiKeyChange:setGroqApiKey});
 
   // ── Inline thread list (not a sub-component to avoid remount) ──
   const threadListJSX = h("div",{className:"threads-list custom-scrollbar"},
