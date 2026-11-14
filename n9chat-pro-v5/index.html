@@ -1,0 +1,296 @@
+<!doctype html>
+<html lang="fr">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="theme-color" content="#10131b">
+  <meta name="description" content="N9chat Pro, un assistant IA rapide et léger.">
+  <title>N9chat Pro</title>
+  <link rel="manifest" href="./manifest.json">
+  <style>
+    :root{color-scheme:dark;--bg:#10131b;--panel:#171b25;--panel2:#1d2230;--line:#2a3040;--text:#f4f6fb;--muted:#9ba5b7;--accent:#8b9cff;--accent2:#a8b4ff;--green:#54d6ad;--shadow:0 24px 80px #0008}
+    *{box-sizing:border-box}html,body{height:100%;margin:0}body{background:var(--bg);color:var(--text);font:15px/1.5 ui-sans-serif,system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif}
+    button,input,textarea{font:inherit}button{color:inherit}.app{height:100dvh;min-height:480px;display:grid;grid-template-rows:68px 1fr;overflow:hidden}
+    .topbar{display:flex;align-items:center;gap:14px;padding:0 22px;border-bottom:1px solid var(--line);background:#12151e}
+    .brand{display:flex;align-items:center;gap:10px;min-width:190px}.brand-mark{width:36px;height:36px;border-radius:12px;display:grid;place-items:center;font-weight:900;color:#12151e;background:linear-gradient(135deg,#a7b3ff,#727ff0)}
+    .brand-name{font-size:15px;font-weight:760;letter-spacing:.01em}.brand-sub{font-size:11px;color:var(--muted)}
+    .top-spacer{flex:1}.model-pill{font-size:11px;color:#cbd2ff;border:1px solid #48517a;background:#20263a;padding:6px 10px;border-radius:99px}
+    .icon-btn,.primary-btn,.subtle-btn,.send-btn,.file-btn{border:1px solid var(--line);background:var(--panel);border-radius:11px;cursor:pointer;transition:background .15s,border-color .15s,transform .15s}
+    .icon-btn{width:38px;height:38px;display:grid;place-items:center;color:var(--muted)}.icon-btn:hover,.subtle-btn:hover,.file-btn:hover{background:var(--panel2);border-color:#46506a;color:var(--text)}
+    .primary-btn{background:var(--accent);color:#111526;border:0;font-weight:750;padding:10px 15px}.primary-btn:hover,.send-btn:hover{background:var(--accent2);transform:translateY(-1px)}
+    .body{min-height:0;display:grid;grid-template-columns:270px 1fr}
+    .sidebar{min-height:0;border-right:1px solid var(--line);background:#131720;padding:18px 13px;display:flex;flex-direction:column}
+    .side-head{display:flex;align-items:center;justify-content:space-between;padding:2px 8px 12px;color:var(--muted);font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:.09em}
+    .thread-list{overflow:auto;display:flex;flex-direction:column;gap:4px}.thread{width:100%;border:1px solid transparent;background:transparent;text-align:left;padding:10px 11px;border-radius:10px;color:var(--muted);cursor:pointer;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+    .thread:hover{background:var(--panel);color:var(--text)}.thread.active{background:#242a3b;border-color:#3a4261;color:#e5e9ff}
+    .side-footer{margin-top:auto;padding:12px 7px 0;color:var(--muted);font-size:11px}.key-status{display:flex;align-items:center;gap:8px}.status-dot{width:8px;height:8px;border-radius:50%;background:#f4b860}.status-dot.ready{background:var(--green)}
+    .workspace{min-width:0;min-height:0;display:grid;grid-template-rows:1fr auto;position:relative}
+    .messages{overflow:auto;padding:36px 22px 20px;scrollbar-color:#394055 transparent}
+    .message-list{width:min(820px,100%);margin:0 auto;display:flex;flex-direction:column;gap:23px}
+    .welcome{margin:auto;max-width:610px;text-align:center;padding:55px 22px 75px}.welcome-mark{width:58px;height:58px;margin:0 auto 18px;border-radius:20px;display:grid;place-items:center;background:linear-gradient(135deg,#323a5e,#242a43);color:#b7c0ff;font-size:26px}
+    .welcome h1{font-size:clamp(25px,4vw,35px);letter-spacing:-.04em;margin:0 0 10px}.welcome p{margin:0;color:var(--muted)}
+    .suggestions{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:9px;margin-top:25px;text-align:left}
+    .suggestion{border:1px solid var(--line);background:#171b25;color:#dce0ec;text-align:left;padding:12px 14px;border-radius:12px;cursor:pointer}.suggestion:hover{border-color:#626e9f;background:#1b2030}
+    .message{display:flex;gap:13px;align-items:flex-start}.avatar{width:30px;height:30px;flex:0 0 30px;border-radius:11px;display:grid;place-items:center;background:#232a3d;color:#bdc6ff;font-size:12px;font-weight:800}
+    .message.user .avatar{background:#2c3348;color:#fff}.message-content{min-width:0;flex:1;padding-top:3px}.message-label{font-size:11px;color:var(--muted);font-weight:700;margin-bottom:5px}.message-text{white-space:pre-wrap;overflow-wrap:anywhere;color:#e7eaf1}.message.user .message-text{color:#d8ddec}
+    .image-chip{display:inline-flex;align-items:center;gap:7px;margin:7px 7px 0 0;padding:5px 8px;border:1px solid var(--line);border-radius:8px;color:var(--muted);font-size:11px}.image-chip img{width:28px;height:28px;object-fit:cover;border-radius:5px}
+    .composer-wrap{padding:8px 22px max(18px,env(safe-area-inset-bottom));background:linear-gradient(transparent,var(--bg) 20%)}
+    .composer{width:min(820px,100%);margin:auto;background:#191e29;border:1px solid #353c4f;border-radius:17px;padding:11px 12px 9px;box-shadow:0 12px 40px #0002}
+    .pending-image{display:none;align-items:center;gap:8px;padding:2px 2px 9px;color:var(--muted);font-size:12px}.pending-image.show{display:flex}.pending-image img{height:48px;width:48px;object-fit:cover;border-radius:8px}.pending-image button{border:0;background:transparent;color:var(--muted);cursor:pointer}
+    .compose-row{display:flex;align-items:flex-end;gap:10px}.compose-input{flex:1;resize:none;border:0;outline:0;background:transparent;color:var(--text);min-height:42px;max-height:180px;padding:10px 5px;line-height:1.5}.compose-input::placeholder{color:#7c869a}
+    .file-btn{height:40px;width:40px;display:grid;place-items:center;color:var(--muted);flex:0 0 40px}.send-btn{height:40px;width:42px;display:grid;place-items:center;flex:0 0 42px;background:var(--accent);color:#111526;border:0;font-size:18px;font-weight:900}.send-btn:disabled{opacity:.4;cursor:not-allowed;transform:none}
+    .composer-hint{text-align:center;color:#737d90;font-size:10px;margin-top:7px}
+    .overlay{position:fixed;inset:0;z-index:10;background:#05070bc9;display:none;place-items:center;padding:18px}.overlay.open{display:grid}
+    .dialog{width:min(470px,100%);background:#191e29;border:1px solid #394156;border-radius:18px;padding:22px;box-shadow:var(--shadow)}
+    .dialog h2{font-size:20px;margin:0 0 8px}.dialog p{font-size:13px;color:var(--muted);margin:0 0 17px}.dialog label{display:block;font-size:12px;font-weight:700;margin-bottom:7px}
+    .key-input{width:100%;background:#10131b;color:var(--text);border:1px solid #394156;border-radius:10px;padding:12px;outline:0}.key-input:focus{border-color:var(--accent)}
+    .dialog-actions{display:flex;justify-content:flex-end;gap:8px;margin-top:16px}.subtle-btn{padding:9px 13px;color:var(--muted)}.dialog .primary-btn{padding:9px 14px}
+    .toast{position:fixed;z-index:20;bottom:24px;left:50%;transform:translate(-50%,12px);opacity:0;pointer-events:none;background:#272e40;border:1px solid #434d68;color:#f4f6fb;padding:10px 14px;border-radius:11px;font-size:13px;transition:opacity .2s,transform .2s}.toast.show{opacity:1;transform:translate(-50%,0)}
+    .mobile-menu{display:none}.hidden-input{display:none}
+    @media(max-width:760px){.app{grid-template-rows:58px 1fr}.topbar{padding:0 12px;gap:9px}.brand{min-width:0;gap:8px}.brand-mark{width:32px;height:32px}.model-pill{display:none}.mobile-menu{display:grid}.body{grid-template-columns:1fr}.sidebar{position:absolute;z-index:5;top:58px;bottom:0;left:0;width:min(300px,84vw);box-shadow:var(--shadow);transform:translateX(-105%);transition:transform .2s}.sidebar.open{transform:translateX(0)}.messages{padding:22px 15px 15px}.composer-wrap{padding:8px 12px max(12px,env(safe-area-inset-bottom))}.suggestions{grid-template-columns:1fr}.welcome{padding:40px 7px 50px}.welcome h1{font-size:28px}.hide-mobile{display:none}}
+    @media(prefers-reduced-motion:reduce){*,*::before,*::after{scroll-behavior:auto!important;transition:none!important;animation:none!important}}
+  </style>
+</head>
+<body>
+  <div class="app">
+    <header class="topbar">
+      <button id="menuBtn" class="icon-btn mobile-menu" aria-label="Afficher les conversations">☰</button>
+      <div class="brand"><div class="brand-mark" aria-hidden="true">N9</div><div><div class="brand-name">N9chat Pro</div><div class="brand-sub">Assistant rapide & privé</div></div></div>
+      <span class="model-pill">Qwen 3.8 · Groq</span><div class="top-spacer"></div>
+      <button id="newBtn" class="primary-btn"><span class="hide-mobile">＋ Nouvelle discussion</span><span class="show-mobile">＋ Nouveau</span></button>
+      <button id="settingsBtn" class="icon-btn" aria-label="Configurer la clé API" title="Configurer Groq">⚙</button>
+    </header>
+    <div class="body">
+      <aside id="sidebar" class="sidebar" aria-label="Conversations">
+        <div class="side-head"><span>Conversations</span><span id="threadCount">0</span></div>
+        <div id="threadList" class="thread-list"></div>
+        <div class="side-footer"><div class="key-status"><span id="keyDot" class="status-dot"></span><span id="keyStatus">Clé Groq non configurée</span></div><div style="margin-top:8px">Les échanges sont enregistrés sur cet appareil.</div></div>
+      </aside>
+      <main class="workspace">
+        <section id="messages" class="messages" aria-live="polite"></section>
+        <div class="composer-wrap">
+          <form id="composer" class="composer">
+            <div id="pendingImage" class="pending-image"><img id="imagePreview" alt="Aperçu de l’image jointe"><span id="imageName"></span><button type="button" id="removeImage" aria-label="Retirer l’image">✕</button></div>
+            <div class="compose-row">
+              <button type="button" id="attachBtn" class="file-btn" aria-label="Joindre une image" title="Joindre une image">＋</button>
+              <textarea id="prompt" class="compose-input" rows="1" placeholder="Écrivez votre message…" aria-label="Votre message"></textarea>
+              <button id="sendBtn" class="send-btn" type="submit" aria-label="Envoyer" title="Envoyer">↑</button>
+            </div>
+            <div class="composer-hint">Entrée pour envoyer · Maj + Entrée pour une nouvelle ligne</div>
+          </form>
+          <input id="imageFile" class="hidden-input" type="file" accept="image/*">
+        </div>
+      </main>
+    </div>
+  </div>
+  <div id="settings" class="overlay" role="dialog" aria-modal="true" aria-labelledby="settingsTitle">
+    <div class="dialog">
+      <h2 id="settingsTitle">Connexion à Groq</h2>
+      <p>Ajoutez votre clé API pour activer le chat. Elle reste dans cette session du navigateur et part directement vers Groq lors des requêtes.</p>
+      <label for="apiKey">Clé API Groq</label><input id="apiKey" class="key-input" type="password" autocomplete="off" spellcheck="false" placeholder="gsk_…">
+      <div class="dialog-actions"><button id="cancelSettings" class="subtle-btn" type="button">Annuler</button><button id="saveSettings" class="primary-btn" type="button">Enregistrer</button></div>
+    </div>
+  </div>
+  <div id="toast" class="toast" role="status" aria-live="polite"></div>
+  <script>
+    (() => {
+      "use strict";
+      const $ = id => document.getElementById(id);
+      const KEY_NAME = "n9v5_groq_key";
+      const STORE_NAME = "n9v5_threads";
+      const API_URL = "https://api.groq.com/openai/v1/chat/completions";
+      const TEXT_MODEL = "qwen/qwen3.8-27b";
+      const VISION_MODEL = "meta-llama/llama-4-scout-17b-16e-instruct";
+      const suggestions = ["Résume un sujet complexe", "Aide-moi à écrire un e-mail", "Explique ce code", "Propose un plan d’action"];
+      let apiKey = sessionStorage.getItem(KEY_NAME) || "";
+      let image = null;
+      let busy = false;
+      let toastTimer = 0;
+      let threads = loadThreads();
+      if (!threads.length) threads = [newThread()];
+      let currentId = threads[threads.length - 1].id;
+
+      function loadThreads() {
+        try {
+          const value = JSON.parse(localStorage.getItem(STORE_NAME) || "[]");
+          return Array.isArray(value) ? value.filter(t => t && typeof t.id === "string" && Array.isArray(t.messages)) : [];
+        } catch { return []; }
+      }
+      function saveThreads() {
+        try {
+          const compact = threads.map(t => ({id:t.id,title:t.title,updated:t.updated,messages:t.messages.map(m => ({role:m.role,text:m.text||"",imageName:m.imageName||""}))}));
+          localStorage.setItem(STORE_NAME, JSON.stringify(compact));
+        } catch { showToast("Stockage saturé : supprimez une ancienne conversation."); }
+      }
+      function newThread() {
+        const id = Date.now().toString(36) + Math.random().toString(36).slice(2,7);
+        return {id,title:"Nouvelle discussion",updated:Date.now(),messages:[]};
+      }
+      function activeThread() { return threads.find(t => t.id === currentId) || threads[threads.length - 1]; }
+      function showToast(message) {
+        const node=$("toast"); node.textContent=message; node.classList.add("show");
+        clearTimeout(toastTimer); toastTimer=setTimeout(()=>node.classList.remove("show"),2800);
+      }
+      function updateKeyStatus() {
+        $("keyStatus").textContent=apiKey?"Clé Groq prête":"Clé Groq non configurée";
+        $("keyDot").classList.toggle("ready",Boolean(apiKey));
+      }
+      function openSettings() {
+        $("apiKey").value=apiKey; $("settings").classList.add("open");
+        setTimeout(()=>$("apiKey").focus(),30);
+      }
+      function closeSettings() { $("settings").classList.remove("open"); }
+      function renderThreads() {
+        const list=$("threadList"); list.replaceChildren();
+        $("threadCount").textContent=String(threads.length);
+        [...threads].sort((a,b)=>b.updated-a.updated).forEach(thread=>{
+          const button=document.createElement("button");
+          button.type="button"; button.className="thread"+(thread.id===currentId?" active":"");
+          button.textContent=thread.title||"Discussion";
+          button.title=button.textContent;
+          button.addEventListener("click",()=>{currentId=thread.id;render();$("sidebar").classList.remove("open");});
+          list.append(button);
+        });
+      }
+      function scrollBottom() { const box=$("messages"); box.scrollTop=box.scrollHeight; }
+      function addTextMessage(parent, role, text, imageName) {
+        const item=document.createElement("article"); item.className="message "+(role==="user"?"user":"assistant");
+        const avatar=document.createElement("div"); avatar.className="avatar"; avatar.textContent=role==="user"?"VO":"N9";
+        const content=document.createElement("div"); content.className="message-content";
+        const label=document.createElement("div"); label.className="message-label"; label.textContent=role==="user"?"Vous":"N9chat Pro";
+        content.append(label);
+        if(imageName) {
+          const chip=document.createElement("span"); chip.className="image-chip";
+          const img=document.createElement("img"); img.alt="Image jointe"; img.src=imageName.data;
+          const name=document.createElement("span"); name.textContent=imageName.name;
+          chip.append(img,name); content.append(chip);
+        }
+        const body=document.createElement("div"); body.className="message-text"; body.textContent=text; content.append(body);
+        item.append(avatar,content); parent.append(item); return body;
+      }
+      function render() {
+        renderThreads();
+        const box=$("messages"); box.replaceChildren();
+        const thread=activeThread(); if(!thread)return;
+        if(!thread.messages.length) {
+          const welcome=document.createElement("div"); welcome.className="welcome";
+          const mark=document.createElement("div"); mark.className="welcome-mark"; mark.textContent="✦";
+          const title=document.createElement("h1"); title.textContent="Que voulez-vous accomplir ?";
+          const desc=document.createElement("p"); desc.textContent="Un assistant simple et rapide, prêt à vous aider.";
+          const cards=document.createElement("div"); cards.className="suggestions";
+          suggestions.forEach(value=>{const b=document.createElement("button");b.type="button";b.className="suggestion";b.textContent=value;b.addEventListener("click",()=>{$("prompt").value=value;resizePrompt();$("prompt").focus();});cards.append(b);});
+          welcome.append(mark,title,desc,cards); box.append(welcome);
+        } else {
+          const list=document.createElement("div"); list.className="message-list";
+          thread.messages.forEach(m=>addTextMessage(list,m.role,m.text,m.imageName?{name:m.imageName,data:m.imageData||""}:null));
+          box.append(list);
+        }
+        scrollBottom(); updateKeyStatus(); updateSendButton();
+      }
+      function updateSendButton() { $("sendBtn").disabled=busy||(!$("prompt").value.trim()&&!image); }
+      function resizePrompt() { const p=$("prompt");p.style.height="auto";p.style.height=Math.min(p.scrollHeight,180)+"px";updateSendButton(); }
+      async function prepareImage(file) {
+        if(!file || !file.type.startsWith("image/")) throw new Error("Choisissez un fichier image.");
+        if(file.size>12*1024*1024) throw new Error("L’image dépasse la limite de 12 Mo.");
+        let bitmap;
+        try { bitmap=await createImageBitmap(file); } catch { throw new Error("Impossible de lire cette image."); }
+        const scale=Math.min(1,1600/Math.max(bitmap.width,bitmap.height));
+        const canvas=document.createElement("canvas");canvas.width=Math.max(1,Math.round(bitmap.width*scale));canvas.height=Math.max(1,Math.round(bitmap.height*scale));
+        canvas.getContext("2d").drawImage(bitmap,0,0,canvas.width,canvas.height);bitmap.close?.();
+        return {data:canvas.toDataURL("image/jpeg",0.82),name:file.name||"image.jpg"};
+      }
+      function setImagePreview() {
+        $("pendingImage").classList.toggle("show",Boolean(image));
+        if(image){$("imagePreview").src=image.data;$("imageName").textContent=image.name;}
+        updateSendButton();
+      }
+      async function readSse(response, onText) {
+        const reader=response.body.getReader();const decoder=new TextDecoder();let buffer="";
+        while(true) {
+          const part=await reader.read();buffer+=decoder.decode(part.value||new Uint8Array(),{stream:!part.done});
+          let end;
+          while((end=buffer.indexOf("\n"))>=0) {
+            const line=buffer.slice(0,end).trim();buffer=buffer.slice(end+1);
+            if(!line.startsWith("data:"))continue;
+            const payload=line.slice(5).trim();if(payload==="[DONE]")return;
+            try { const data=JSON.parse(payload);const value=data.choices?.[0]?.delta?.content;if(typeof value==="string"&&value)onText(value); } catch {}
+          }
+          if(part.done)break;
+        }
+      }
+      async function send() {
+        const prompt=$("prompt").value.trim();if((!prompt&&!image)||busy)return;
+        if(!apiKey){openSettings();showToast("Ajoutez votre clé Groq pour commencer.");return;}
+        const thread=activeThread();if(!thread)return;
+        const attached=image;image=null;setImagePreview();
+        const userMessage={role:"user",text:prompt,imageName:attached?.name||""};
+        thread.messages.push(userMessage);thread.updated=Date.now();
+        if(thread.title==="Nouvelle discussion")thread.title=(prompt||"Analyse d’image").slice(0,48);
+        $("prompt").value="";resizePrompt();
+        const list=document.createElement("div");list.className="message-list";$("messages").replaceChildren(list);
+        addTextMessage(list,"user",prompt,attached);
+        const responseNode=addTextMessage(list,"assistant","Réflexion…");
+        const assistantMessage={role:"assistant",text:""};thread.messages.push(assistantMessage);
+        busy=true;updateSendButton();renderThreads();scrollBottom();
+        try {
+          const history=thread.messages.slice(-13,-1).map(m=>({role:m.role,content:m.text||""}));
+          let content=prompt;
+          if(attached) {
+            content=[];
+            if(prompt)content.push({type:"text",text:prompt});
+            content.push({type:"image_url",image_url:{url:attached.data}});
+          }
+          const requestMessages=[{role:"system",content:"Tu es N9chat Pro, un assistant utile, clair et précis. Réponds dans la langue du message. Utilise une mise en forme texte lisible."},...history,{role:"user",content}];
+          const response=await fetch(API_URL,{method:"POST",headers:{"Authorization":"Bearer "+apiKey,"Content-Type":"application/json"},body:JSON.stringify({model:attached?VISION_MODEL:TEXT_MODEL,messages:requestMessages,temperature:0.6,max_tokens:2048,stream:true})});
+          if(!response.ok) {
+            let message="Erreur Groq ("+response.status+"). Vérifiez la clé et les limites de votre compte.";
+            try{const body=await response.json();message=body.error?.message||message;}catch{}
+            throw new Error(message);
+          }
+          let started=false;
+          await readSse(response,chunk=>{
+            if(!started){responseNode.textContent="";started=true;}
+            responseNode.textContent+=chunk;assistantMessage.text+=chunk;
+            if(!busy)return;
+            requestAnimationFrame(scrollBottom);
+          });
+          if(!assistantMessage.text)assistantMessage.text="Aucune réponse reçue.";
+          thread.updated=Date.now();saveThreads();
+        } catch(error) {
+          assistantMessage.text="Erreur : "+(error.message||"la connexion a échoué.");
+          responseNode.textContent=assistantMessage.text;saveThreads();
+        } finally {
+          busy=false;updateSendButton();renderThreads();
+        }
+      }
+      function startThread() {
+        const thread=newThread();threads.push(thread);currentId=thread.id;saveThreads();render();$("prompt").focus();
+      }
+
+      $("composer").addEventListener("submit",event=>{event.preventDefault();send();});
+      $("prompt").addEventListener("input",resizePrompt);
+      $("prompt").addEventListener("keydown",event=>{if(event.key==="Enter"&&!event.shiftKey){event.preventDefault();send();}});
+      $("newBtn").addEventListener("click",startThread);
+      $("settingsBtn").addEventListener("click",openSettings);
+      $("cancelSettings").addEventListener("click",closeSettings);
+      $("saveSettings").addEventListener("click",()=>{
+        apiKey=$("apiKey").value.trim();
+        if(apiKey)sessionStorage.setItem(KEY_NAME,apiKey);else sessionStorage.removeItem(KEY_NAME);
+        updateKeyStatus();closeSettings();showToast(apiKey?"Clé enregistrée pour cette session.":"Clé supprimée.");
+      });
+      $("settings").addEventListener("click",event=>{if(event.target===$("settings"))closeSettings();});
+      document.addEventListener("keydown",event=>{if(event.key==="Escape")closeSettings();if((event.ctrlKey||event.metaKey)&&event.key==="k"){event.preventDefault();openSettings();}});
+      $("attachBtn").addEventListener("click",()=>$("imageFile").click());
+      $("imageFile").addEventListener("change",async event=>{
+        try{image=await prepareImage(event.target.files[0]);setImagePreview();}
+        catch(error){showToast(error.message);}
+        event.target.value="";
+      });
+      $("removeImage").addEventListener("click",()=>{image=null;setImagePreview();});
+      $("menuBtn").addEventListener("click",()=>$("sidebar").classList.toggle("open"));
+      if("serviceWorker" in navigator && location.protocol.startsWith("http"))window.addEventListener("load",()=>navigator.serviceWorker.register("./sw.js").catch(()=>{}));
+      render();
+    })();
+  </script>
+</body>
+</html>
